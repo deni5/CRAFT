@@ -101,15 +101,29 @@ export default function Dashboard() {
     btc_price: p.btc_price,
   }))
 
-  const signalChartData = signals.map(s => ({
-    date: s.date?.slice(5),
-    confidence: s.confidence,
-    sell: s.sell_prob,
-    hold: s.hold_prob,
-    buy: s.buy_prob,
-    signal: s.signal,
-    price: s.price,
-  }))
+  // Нормалізуємо дати для обох графіків
+  const allDates = [...new Set([
+    ...signals.map(s => s.date),
+    ...sentiment.map(s => s.date)
+  ])].sort()
+
+  const signalChartData = allDates.map(date => {
+    const s = signals.find(x => x.date === date) || {}
+    const sent = sentiment.find(x => x.date === date) || {}
+    return {
+      date: date?.slice(5),
+      confidence: s.confidence,
+      sell: s.sell_prob,
+      hold: s.hold_prob,
+      buy: s.buy_prob,
+      signal: s.signal,
+      price: s.price,
+      mean: sent.sentiment_mean,
+      momentum: sent.sentiment_momentum,
+      bear: sent.bear_signal,
+      bullish: sent.bullish_ratio,
+    }
+  })
 
   const tabs = [
     { id: 'overview', label: 'Огляд' },
@@ -347,13 +361,7 @@ export default function Dashboard() {
                 Sentiment новин BTCUSDT (FinBERT аналіз)
               </div>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={sentiment.map(s => ({
-                  date: s.date?.slice(5),
-                  mean: s.sentiment_mean,
-                  momentum: s.sentiment_momentum,
-                  bear: s.bear_signal,
-                  bullish: s.bullish_ratio,
-                }))}>
+                <LineChart data={signalChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
                   <YAxis domain={[-0.5, 0.5]} tick={{ fontSize: 10, fill: C.muted }} />
@@ -372,12 +380,7 @@ export default function Dashboard() {
                 Bear Signal та Bullish Ratio
               </div>
               <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={sentiment.map(s => ({
-                  date: s.date?.slice(5),
-                  bear: s.bear_signal,
-                  bullish: s.bullish_ratio,
-                  news: s.news_count,
-                }))}>
+                <AreaChart data={signalChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
                   <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => `${(v*100).toFixed(0)}%`} />
