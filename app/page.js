@@ -256,13 +256,13 @@ export default function Dashboard() {
                 {/* Market indicators */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 20, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
                   {[
-                    { label: 'RSI', value: latest.rsi?.toFixed(1), color: (latest.rsi || 0) > 70 ? C.red : (latest.rsi || 0) < 30 ? C.green : C.muted },
-                    { label: 'F&G', value: latest.fg, color: (latest.fg || 0) < 25 ? C.red : (latest.fg || 0) > 60 ? C.green : C.muted },
-                    { label: 'VIX', value: latest.vix?.toFixed(1), color: (latest.vix || 0) > 25 ? C.red : (latest.vix || 0) > 20 ? C.yellow : C.muted },
-                    { label: 'Sent', value: (latest.sent_mom || 0) >= 0 ? `+${latest.sent_mom?.toFixed(3)}` : latest.sent_mom?.toFixed(3), color: (latest.sent_mom || 0) >= 0 ? C.green : C.red },
+                    { label: 'RSI', value: latest.rsi?.toFixed(1), color: (latest.rsi || 0) > 70 ? C.red : (latest.rsi || 0) < 30 ? C.green : C.muted, hint: 'Relative Strength Index: перекупленість/перепроданість. >70 перекуплений, <30 перепроданий' },
+                    { label: 'F&G', value: latest.fg, color: (latest.fg || 0) < 25 ? C.red : (latest.fg || 0) > 60 ? C.green : C.muted, hint: 'Fear & Greed Index: настрій крипторинку 0-100. <25 страх, >75 жадібність' },
+                    { label: 'VIX', value: latest.vix?.toFixed(1), color: (latest.vix || 0) > 25 ? C.red : (latest.vix || 0) > 20 ? C.yellow : C.muted, hint: 'Volatility Index: індекс страху фондового ринку США. <15 спокійно, >25 паніка' },
+                    { label: 'Sent', value: (latest.sent_mom || 0) >= 0 ? `+${latest.sent_mom?.toFixed(3)}` : latest.sent_mom?.toFixed(3), color: (latest.sent_mom || 0) >= 0 ? C.green : C.red, hint: 'Sentiment Momentum: тренд новинного фону. >0 позитивний, <0 негативний' },
                   ].map(ind => (
-                    <div key={ind.label} style={{ textAlign: 'center', background: C.bg, borderRadius: 8, padding: '10px 6px' }}>
-                      <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>
+                    <div key={ind.label} title={ind.hint} style={{ textAlign: 'center', background: C.bg, borderRadius: 8, padding: '10px 6px', cursor: 'help' }}>
+                      <div style={{ fontSize: 10, color: C.muted, marginBottom: 4, borderBottom: '1px dotted #4B5563' }}>
                         {ind.label}
                       </div>
                       <div style={{ fontSize: 17, fontWeight: 600, color: ind.color, fontFamily: 'JetBrains Mono' }}>{ind.value}</div>
