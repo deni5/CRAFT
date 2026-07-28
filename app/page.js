@@ -540,19 +540,19 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...trades].reverse().map((t, i) => (
+                  {[...trades].reverse().map((trade, i) => (
                     <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.muted, fontFamily: 'JetBrains Mono' }}>{t.date}</td>
-                      <td style={{ padding: '12px 16px' }}><SignalBadge signal={t.type} /></td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.text, fontFamily: 'JetBrains Mono' }}>{t.btc_amount?.toFixed(6)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.text, fontFamily: 'JetBrains Mono' }}>${(t.price || 0).toLocaleString()}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, fontFamily: 'JetBrains Mono', color: t.type === 'SELL' ? C.green : C.red }}>
-                        {t.type === 'SELL' ? '+' : '-'}${(t.usdt_amount || 0).toLocaleString()}
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.muted, fontFamily: 'JetBrains Mono' }}>{trade.date}</td>
+                      <td style={{ padding: '12px 16px' }}><SignalBadge signal={trade.type} /></td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.text, fontFamily: 'JetBrains Mono' }}>{trade.btc_amount?.toFixed(6)}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.text, fontFamily: 'JetBrains Mono' }}>${(trade.price || 0).toLocaleString()}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, fontFamily: 'JetBrains Mono', color: trade.type === 'SELL' ? C.green : C.red }}>
+                        {trade.type === 'SELL' ? '+' : '-'}${(trade.usdt_amount || 0).toLocaleString()}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 11, color: C.muted }}>
-                        {t.note?.includes('TWAP') ? <Hint term="TWAP">{t.note}</Hint> :
-                         t.note?.includes('DCA') ? <Hint term="DCA">{t.note}</Hint> :
-                         t.note?.includes('FinBERT') ? <Hint term="FinBERT">{t.note}</Hint> : t.note}
+                        {trade.note?.includes('TWAP') ? <Hint term="TWAP">{trade.note}</Hint> :
+                         trade.note?.includes('DCA') ? <Hint term="DCA">{trade.note}</Hint> :
+                         trade.note?.includes('FinBERT') ? <Hint term="FinBERT">{trade.note}</Hint> : trade.note}
                       </td>
                     </tr>
                   ))}
