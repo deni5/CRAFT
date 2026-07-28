@@ -263,7 +263,7 @@ export default function Dashboard() {
                   ].map(ind => (
                     <div key={ind.label} style={{ textAlign: 'center', background: C.bg, borderRadius: 8, padding: '10px 6px' }}>
                       <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>
-                        <Hint term={ind.label}>{ind.label}</Hint>
+                        {ind.label}
                       </div>
                       <div style={{ fontSize: 17, fontWeight: 600, color: ind.color, fontFamily: 'JetBrains Mono' }}>{ind.value}</div>
                     </div>
@@ -443,7 +443,7 @@ export default function Dashboard() {
                   <thead>
                     <tr style={{ background: C.bg }}>
                       {['Дата', 'Сигнал', 'Confidence', 'SELL', 'HOLD', 'BUY', 'Ціна BTC', 'RSI', 'F&G'].map(h => (
-                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{t ? <Hint term={t}>{h}</Hint> : h}</th>
+                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
