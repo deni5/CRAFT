@@ -107,11 +107,8 @@ export default function Dashboard() {
     const sentMap = {}
     sentiment.forEach(s => { sentMap[s.date] = s })
 
-    // Заповнюємо пропуски sentiment через ffill
-    let lastSent = {}
     return signals.map(s => {
-      const sent = sentMap[s.date] || lastSent
-      if (sentMap[s.date]) lastSent = sentMap[s.date]
+      const sent = sentMap[s.date] || {}
       return {
         date: s.date?.slice(5),
         confidence: s.confidence,
