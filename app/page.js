@@ -63,17 +63,20 @@ export default function Dashboard() {
   const [trades, setTrades] = useState([])
   const [portfolio, setPortfolio] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sentiment, setSentiment] = useState([])
   const [lastUpdate, setLastUpdate] = useState(null)
 
   const fetchData = useCallback(async () => {
-    const [s, t, p] = await Promise.all([
+    const [s, t, p, sent] = await Promise.all([
       supabase.from('signals').select('*').order('date', { ascending: true }),
       supabase.from('trades').select('*').order('date', { ascending: true }),
       supabase.from('portfolio_history').select('*').order('date', { ascending: true }),
+      supabase.from('sentiment_history').select('*').order('date', { ascending: true }),
     ])
     if (s.data) setSignals(s.data)
     if (t.data) setTrades(t.data)
     if (p.data) setPortfolio(p.data)
+    if (sent.data) setSentiment(sent.data)
     setLastUpdate(new Date())
     setLoading(false)
   }, [])
@@ -336,6 +339,57 @@ export default function Dashboard() {
                   <Line type="monotone" dataKey="buy" name="BUY" stroke={C.green} strokeWidth={1} dot={false} strokeDasharray="3 3" />
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+
+            {/* Sentiment chart */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+                Sentiment новин BTCUSDT (FinBERT аналіз)
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={sentiment.map(s => ({
+                  date: s.date?.slice(5),
+                  mean: s.sentiment_mean,
+                  momentum: s.sentiment_momentum,
+                  bear: s.bear_signal,
+                  bullish: s.bullish_ratio,
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
+                  <YAxis domain={[-0.5, 0.5]} tick={{ fontSize: 10, fill: C.muted }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <ReferenceLine y={0} stroke={C.muted} strokeDasharray="2 2" />
+                  <ReferenceLine y={-0.15} stroke={C.red} strokeDasharray="3 3" label={{ value: 'Bear -0.15', fill: C.red, fontSize: 9 }} />
+                  <Line type="monotone" dataKey="mean" name="Sentiment Mean" stroke={C.blue} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="momentum" name="Momentum" stroke={C.purple} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Bear signal + Bullish ratio */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+                Bear Signal та Bullish Ratio
+              </div>
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={sentiment.map(s => ({
+                  date: s.date?.slice(5),
+                  bear: s.bear_signal,
+                  bullish: s.bullish_ratio,
+                  news: s.news_count,
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
+                  <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => `${(v*100).toFixed(0)}%`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="bullish" name="Bullish Ratio" stroke={C.green} fill={C.green} fillOpacity={0.2} strokeWidth={1.5} dot={false} />
+                  <Area type="monotone" dataKey="bear" name="Bear Signal" stroke={C.red} fill={C.red} fillOpacity={0.3} strokeWidth={1.5} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: C.green }}>● Bullish Ratio (частка позитивних)</div>
+                <div style={{ fontSize: 11, color: C.red }}>● Bear Signal (sentiment &lt; -0.15)</div>
+              </div>
             </div>
 
             {/* Signal distribution */}
