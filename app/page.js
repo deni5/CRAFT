@@ -534,11 +534,8 @@ export default function Dashboard() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: C.bg }}>
-                    {[
-                    {h:'Дата',t:null},{h:'Тип',t:null},{h:'BTC',t:null},
-                    {h:'Ціна',t:null},{h:'USDT',t:null},{h:'Примітка',t:null}
-                  ].map(({h,t}) => (
-                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{t ? <Hint term={t}>{h}</Hint> : h}</th>
+                  {['Дата', 'Тип', 'BTC', 'Ціна', 'USDT', 'Примітка'].map(h => (
+                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
