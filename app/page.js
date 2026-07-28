@@ -509,9 +509,7 @@ export default function Dashboard() {
                         {trade.type === 'SELL' ? '+' : '-'}${(trade.usdt_amount || 0).toLocaleString()}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 11, color: C.muted }}>
-                        {trade.note?.includes('TWAP') ? {trade.note} :
-                         trade.note?.includes('DCA') ? {trade.note} :
-                         trade.note?.includes('FinBERT') ? {trade.note} : trade.note}
+                        {trade.note}
                       </td>
                     </tr>
                   ))}
