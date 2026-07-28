@@ -15,47 +15,6 @@ const C = {
   text: '#e2e8f0', muted: '#6b7280', dim: '#374151'
 }
 
-const HINTS = {
-  'RSI': 'Relative Strength Index — індикатор перекупленості/перепроданості (0-100). >70 = перекуплений, <30 = перепроданий',
-  'VIX': 'Volatility Index — індекс страху фондового ринку США. <15 = спокійно, >25 = паніка',
-  'F&G': 'Fear & Greed Index — індекс страху і жадібності крипторинку (0-100). <25 = страх, >75 = жадібність',
-  'Sent': 'Sentiment Momentum — тренд новинного фону. >0 = позитивний, <0 = негативний',
-  'BUY': 'Сигнал купівлі — модель очікує зростання ціни протягом 3 днів',
-  'HOLD': 'Утримання позиції — модель не впевнена в напрямку',
-  'SELL': 'Сигнал продажу — модель очікує падіння ціни протягом 3 днів',
-  'Confidence': 'Ймовірність домінуючого сигналу (BUY/HOLD/SELL). >70% = активний сигнал',
-  'TWAP': 'Time Weighted Average Price — виконання ордеру частинами для зменшення впливу на ринок',
-  'DCA': 'Dollar Cost Averaging — регулярна купівля незалежно від ціни для зниження середньої',
-  'FinBERT': 'Фінансова мовна модель на основі BERT для аналізу тональності фінансових новин',
-}
-
-function Hint({ term, children }) {
-  const [show, setShow] = useState(false)
-  const hint = HINTS[term]
-  if (!hint) return children
-  return (
-    <span style={{ position: 'relative', display: 'inline-block' }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}>
-      <span style={{ borderBottom: '1px dashed #4B5563', cursor: 'help' }}>{children}</span>
-      {show && (
-        <div style={{
-          position: 'absolute', bottom: '100%', left: '50%',
-          transform: 'translateX(-50%)', marginBottom: 8,
-          background: '#1f2937', border: '1px solid #374151',
-          borderRadius: 8, padding: '8px 12px', fontSize: 11,
-          color: '#d1d5db', width: 240, zIndex: 100,
-          lineHeight: 1.5, pointerEvents: 'none',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-        }}>
-          <div style={{ fontWeight: 600, color: '#f9fafb', marginBottom: 4 }}>{term}</div>
-          {hint}
-        </div>
-      )}
-    </span>
-  )
-}
-
 function KPICard({ label, value, sub, color, mono }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 24px' }}>
@@ -267,7 +226,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
                   <SignalBadge signal={latest.signal || 'BUY'} size="lg" />
                   <div>
-                    <div style={{ fontSize: 13, color: C.muted }}><Hint term="Confidence">Confidence</Hint></div>
+                    <div style={{ fontSize: 13, color: C.muted }}>Confidence</div>
                     <div style={{ fontSize: 28, fontWeight: 700, color: (latest.confidence || 0) >= 0.7 ? C.green : C.yellow, fontFamily: 'JetBrains Mono' }}>
                       {((latest.confidence || 0) * 100).toFixed(1)}%
                     </div>
@@ -550,9 +509,9 @@ export default function Dashboard() {
                         {trade.type === 'SELL' ? '+' : '-'}${(trade.usdt_amount || 0).toLocaleString()}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 11, color: C.muted }}>
-                        {trade.note?.includes('TWAP') ? <Hint term="TWAP">{trade.note}</Hint> :
-                         trade.note?.includes('DCA') ? <Hint term="DCA">{trade.note}</Hint> :
-                         trade.note?.includes('FinBERT') ? <Hint term="FinBERT">{trade.note}</Hint> : trade.note}
+                        {trade.note?.includes('TWAP') ? {trade.note} :
+                         trade.note?.includes('DCA') ? {trade.note} :
+                         trade.note?.includes('FinBERT') ? {trade.note} : trade.note}
                       </td>
                     </tr>
                   ))}
