@@ -322,7 +322,7 @@ export default function Dashboard() {
             {/* Confidence chart */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
               <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
-                Confidence моделі в часі
+                Probability домінуючого сигналу (BUY/HOLD/SELL) в часі
               </div>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={signalChartData}>
