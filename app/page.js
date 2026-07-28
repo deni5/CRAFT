@@ -395,6 +395,28 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* BTC Price chart */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
+              <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+                Ціна BTC/USDT
+              </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <AreaChart data={signalChartData}>
+                  <defs>
+                    <linearGradient id="btcGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={C.orange} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
+                  <YAxis tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} domain={['auto', 'auto']} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="price" name="BTC ціна" stroke={C.orange} fill="url(#btcGrad)" strokeWidth={2} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
             {/* Signal distribution */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
