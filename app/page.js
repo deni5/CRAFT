@@ -15,6 +15,47 @@ const C = {
   text: '#e2e8f0', muted: '#6b7280', dim: '#374151'
 }
 
+const HINTS = {
+  'RSI': 'Relative Strength Index — індикатор перекупленості/перепроданості (0-100). >70 = перекуплений, <30 = перепроданий',
+  'VIX': 'Volatility Index — індекс страху фондового ринку США. <15 = спокійно, >25 = паніка',
+  'F&G': 'Fear & Greed Index — індекс страху і жадібності крипторинку (0-100). <25 = страх, >75 = жадібність',
+  'Sent': 'Sentiment Momentum — тренд новинного фону. >0 = позитивний, <0 = негативний',
+  'BUY': 'Сигнал купівлі — модель очікує зростання ціни протягом 3 днів',
+  'HOLD': 'Утримання позиції — модель не впевнена в напрямку',
+  'SELL': 'Сигнал продажу — модель очікує падіння ціни протягом 3 днів',
+  'Confidence': 'Ймовірність домінуючого сигналу (BUY/HOLD/SELL). >70% = активний сигнал',
+  'TWAP': 'Time Weighted Average Price — виконання ордеру частинами для зменшення впливу на ринок',
+  'DCA': 'Dollar Cost Averaging — регулярна купівля незалежно від ціни для зниження середньої',
+  'FinBERT': 'Фінансова мовна модель на основі BERT для аналізу тональності фінансових новин',
+}
+
+function Hint({ term, children }) {
+  const [show, setShow] = useState(false)
+  const hint = HINTS[term]
+  if (!hint) return children
+  return (
+    <span style={{ position: 'relative', display: 'inline-block' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}>
+      <span style={{ borderBottom: '1px dashed #4B5563', cursor: 'help' }}>{children}</span>
+      {show && (
+        <div style={{
+          position: 'absolute', bottom: '100%', left: '50%',
+          transform: 'translateX(-50%)', marginBottom: 8,
+          background: '#1f2937', border: '1px solid #374151',
+          borderRadius: 8, padding: '8px 12px', fontSize: 11,
+          color: '#d1d5db', width: 240, zIndex: 100,
+          lineHeight: 1.5, pointerEvents: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ fontWeight: 600, color: '#f9fafb', marginBottom: 4 }}>{term}</div>
+          {hint}
+        </div>
+      )}
+    </span>
+  )
+}
+
 function KPICard({ label, value, sub, color, mono }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 24px' }}>
@@ -226,7 +267,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
                   <SignalBadge signal={latest.signal || 'BUY'} size="lg" />
                   <div>
-                    <div style={{ fontSize: 13, color: C.muted }}>Confidence</div>
+                    <div style={{ fontSize: 13, color: C.muted }}><Hint term="Confidence">Confidence</Hint></div>
                     <div style={{ fontSize: 28, fontWeight: 700, color: (latest.confidence || 0) >= 0.7 ? C.green : C.yellow, fontFamily: 'JetBrains Mono' }}>
                       {((latest.confidence || 0) * 100).toFixed(1)}%
                     </div>
@@ -262,7 +303,9 @@ export default function Dashboard() {
                     { label: 'Sent', value: (latest.sent_mom || 0) >= 0 ? `+${latest.sent_mom?.toFixed(3)}` : latest.sent_mom?.toFixed(3), color: (latest.sent_mom || 0) >= 0 ? C.green : C.red },
                   ].map(ind => (
                     <div key={ind.label} style={{ textAlign: 'center', background: C.bg, borderRadius: 8, padding: '10px 6px' }}>
-                      <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>{ind.label}</div>
+                      <div style={{ fontSize: 10, color: C.muted, marginBottom: 4 }}>
+                        <Hint term={ind.label}>{ind.label}</Hint>
+                      </div>
                       <div style={{ fontSize: 17, fontWeight: 600, color: ind.color, fontFamily: 'JetBrains Mono' }}>{ind.value}</div>
                     </div>
                   ))}
@@ -441,7 +484,7 @@ export default function Dashboard() {
                   <thead>
                     <tr style={{ background: C.bg }}>
                       {['Дата', 'Сигнал', 'Confidence', 'SELL', 'HOLD', 'BUY', 'Ціна BTC', 'RSI', 'F&G'].map(h => (
-                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>
+                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{t ? <Hint term={t}>{h}</Hint> : h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -491,8 +534,11 @@ export default function Dashboard() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: C.bg }}>
-                    {['Дата', 'Тип', 'BTC', 'Ціна', 'USDT', 'Примітка'].map(h => (
-                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>
+                    {[
+                    {h:'Дата',t:null},{h:'Тип',t:null},{h:'BTC',t:null},
+                    {h:'Ціна',t:null},{h:'USDT',t:null},{h:'Примітка',t:null}
+                  ].map(({h,t}) => (
+                      <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{t ? <Hint term={t}>{h}</Hint> : h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -506,7 +552,11 @@ export default function Dashboard() {
                       <td style={{ padding: '12px 16px', fontSize: 12, fontFamily: 'JetBrains Mono', color: t.type === 'SELL' ? C.green : C.red }}>
                         {t.type === 'SELL' ? '+' : '-'}${(t.usdt_amount || 0).toLocaleString()}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 11, color: C.muted }}>{t.note}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 11, color: C.muted }}>
+                        {t.note?.includes('TWAP') ? <Hint term="TWAP">{t.note}</Hint> :
+                         t.note?.includes('DCA') ? <Hint term="DCA">{t.note}</Hint> :
+                         t.note?.includes('FinBERT') ? <Hint term="FinBERT">{t.note}</Hint> : t.note}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
