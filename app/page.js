@@ -213,13 +213,13 @@ export default function Dashboard() {
         </div>
         {/* Tabs */}
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 0 }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
+          {tabs.map(tabItem => (
+            <button key={tabItem.id} onClick={() => setTab(tabItem.id)} style={{
               padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
-              borderBottom: tab === t.id ? `2px solid ${C.orange}` : '2px solid transparent',
-              color: tab === t.id ? C.orange : C.muted,
+              borderBottom: tab === tabItem.id ? `2px solid ${C.orange}` : '2px solid transparent',
+              color: tab === tabItem.id ? C.orange : C.muted,
               fontSize: 13, fontWeight: 500, transition: 'all 0.15s'
-            }}>{t.label}</button>
+            }}>{tabItem.label}</button>
           ))}
         </div>
       </div>
