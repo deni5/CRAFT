@@ -101,29 +101,32 @@ export default function Dashboard() {
     btc_price: p.btc_price,
   }))
 
-  // Нормалізуємо дати для обох графіків
-  const allDates = [...new Set([
-    ...signals.map(s => s.date),
-    ...sentiment.map(s => s.date)
-  ])].sort()
+  // Нормалізуємо дати — тільки дати де є сигнали
+  const signalChartData = (() => {
+    // Будуємо sentiment map для швидкого пошуку
+    const sentMap = {}
+    sentiment.forEach(s => { sentMap[s.date] = s })
 
-  const signalChartData = allDates.map(date => {
-    const s = signals.find(x => x.date === date) || {}
-    const sent = sentiment.find(x => x.date === date) || {}
-    return {
-      date: date?.slice(5),
-      confidence: s.confidence,
-      sell: s.sell_prob,
-      hold: s.hold_prob,
-      buy: s.buy_prob,
-      signal: s.signal,
-      price: s.price,
-      mean: sent.sentiment_mean,
-      momentum: sent.sentiment_momentum,
-      bear: sent.bear_signal,
-      bullish: sent.bullish_ratio,
-    }
-  })
+    // Заповнюємо пропуски sentiment через ffill
+    let lastSent = {}
+    return signals.map(s => {
+      const sent = sentMap[s.date] || lastSent
+      if (sentMap[s.date]) lastSent = sentMap[s.date]
+      return {
+        date: s.date?.slice(5),
+        confidence: s.confidence,
+        sell: s.sell_prob,
+        hold: s.hold_prob,
+        buy: s.buy_prob,
+        signal: s.signal,
+        price: s.price,
+        mean: sent.sentiment_mean ?? null,
+        momentum: sent.sentiment_momentum ?? null,
+        bear: sent.bear_signal ?? null,
+        bullish: sent.bullish_ratio ?? null,
+      }
+    })
+  })()
 
   const tabs = [
     { id: 'overview', label: 'Огляд' },
