@@ -548,7 +548,7 @@ export default function Dashboard() {
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
                 <div style={{ fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Конфігурація</div>
                 {[
-                  ['Біржа', 'Bybit Testnet SPOT'],
+                  ['Біржа', 'Binance Testnet SPOT'],
                   ['Символ', 'BTCUSDT'],
                   ['Пайплайн', 'Щодня о 02:00 (launchd)'],
                   ['TWAP', 'Адаптивний 1-3 дні'],
@@ -572,7 +572,7 @@ export default function Dashboard() {
                   ['B', 'FinBERT NLP', 'Sentiment + [CLS] embeddings', C.purple],
                   ['C', 'CRAFTModel', 'GRU+Residual → BUY/HOLD/SELL', C.orange],
                   ['D', 'Розмір позиції', 'Vol-based sizing + confidence', C.green],
-                  ['E', 'Виконання', 'Adaptive TWAP + Bybit API V5', '#06b6d4'],
+                  ['E', 'Виконання', 'Adaptive TWAP + Binance API', '#06b6d4'],
                   ['F', 'Моніторинг', 'launchd + state + Supabase push', C.muted],
                 ].map(([id, name, desc, color]) => (
                   <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
@@ -625,7 +625,7 @@ export default function Dashboard() {
 
         {/* Footer */}
         <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: C.dim, paddingBottom: 24 }}>
-          CRAFT Bot v3.2 · Bybit Testnet · Дані оновлюються щодня о 02:00 · Не є фінансовою порадою
+          CRAFT Bot v3.2 · Binance Testnet · Дані оновлюються щодня о 02:00 · Не є фінансовою порадою
         </div>
       </div>
     </div>
