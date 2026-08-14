@@ -88,12 +88,25 @@ export default function Dashboard() {
   }, [fetchData])
 
   const latest = signals[signals.length - 1] || {}
+  const currentPortfolio = latest.portfolio || 0
+
+  // Варіант 1 — Simple P&L (з поповненням)
   const startPortfolio = 5000
   const topup = 37632
-  const currentPortfolio = latest.portfolio || 0
   const realPnl = currentPortfolio - startPortfolio - topup
   const realPnlPct = (realPnl / (startPortfolio + topup)) * 100
+
+  // Варіант 2 — TWR (Time-Weighted Return)
+  // До поповнення 11.06: 5000 → ~4027 (портфель на 10.06)
+  const twr1 = 4023.36 / 4970.24  // ratio до поповнення
+  // Після поповнення: 38172 → поточний
+  const twr2 = currentPortfolio / 38172.35
+  const twrPct = (twr1 * twr2 - 1) * 100
+
+  // Варіант 3 — BTC Buy&Hold
   const bhPnl = ((latest.price || 0) - 77068) / 77068 * 100
+  // Перевага CRAFT над BTC
+  const craftVsBh = twrPct - bhPnl
 
   const chartData = portfolio.map(p => ({
     date: p.date?.slice(5),
@@ -197,22 +210,36 @@ export default function Dashboard() {
                 color={C.green} mono
               />
               <KPICard
-                label="Реальний P&L"
+                label="TWR (без поповнень)"
+                value={`${twrPct >= 0 ? '+' : ''}${twrPct.toFixed(1)}%`}
+                sub={`Time-Weighted Return — чиста ефективність боту`}
+                color={twrPct >= 0 ? C.green : C.red} mono
+              />
+              <KPICard
+                label="Simple P&L (з поповненням)"
                 value={`${realPnl >= 0 ? '+' : ''}$${realPnl.toFixed(0)}`}
-                sub={`${realPnlPct >= 0 ? '+' : ''}${realPnlPct.toFixed(1)}% від вкладених коштів`}
+                sub={`${realPnlPct >= 0 ? '+' : ''}${realPnlPct.toFixed(1)}% від усіх вкладень`}
                 color={realPnl >= 0 ? C.green : C.red} mono
               />
               <KPICard
-                label="CRAFT vs Buy & Hold"
-                value={`+${(realPnlPct - bhPnl).toFixed(1)}%`}
-                sub={`B&H за період: ${bhPnl.toFixed(1)}%`}
+                label="CRAFT TWR vs BTC B&H"
+                value={`${craftVsBh >= 0 ? '+' : ''}${craftVsBh.toFixed(1)}%`}
+                sub={`BTC B&H: ${bhPnl.toFixed(1)}% | TWR: ${twrPct.toFixed(1)}%`}
                 color={C.blue} mono
               />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginTop: 0 }}>
               <KPICard
                 label="Ціна BTC"
                 value={`$${(latest.price || 0).toLocaleString()}`}
                 sub={`RSI ${latest.rsi?.toFixed(1)} | VIX ${latest.vix?.toFixed(1)}`}
                 color={C.orange} mono
+              />
+              <KPICard
+                label="Загальний внесок"
+                value={`$${(startPortfolio + topup).toLocaleString()}`}
+                sub={`Старт $${startPortfolio.toLocaleString()} + Поповнення $${topup.toLocaleString()}`}
+                color={C.muted} mono
               />
             </div>
 
