@@ -19,7 +19,15 @@ const C = {
 const MODEL_COLORS = {
   v4_live: '#f97316', gru_noemb: '#3987e5', logreg_noemb: '#d55181',
   tsmom_vt: '#199e70', vt_bh: '#c98500', bh: '#9ca3af',
+  v4_t045: '#fdba74', v4_t040: '#ea580c', v4_t035: '#9a3412',
+  v4_edge02: '#a78bfa', v4_edge05: '#6d28d9', gru_t045: '#93c5fd', gru_t040: '#1d4ed8',
 }
+// Групи на вкладці «Моделі»: основні моделі і підбір порогу рішення (бойова v4 і B&H — як орієнтири)
+const MODEL_GROUPS = [
+  { key: 'main', title: 'Основні моделі', pick: r => r.kind !== 'threshold' },
+  { key: 'thr', title: 'Підбір порогу рішення (з 19.10.2026)', pick: r => r.kind === 'threshold' || r.model === 'v4_live' || r.model === 'bh',
+    intro: 'Варіанти використовують той самий щоденний прогноз, що й бойова модель, і відрізняються лише правилом рішення. «Поріг» — мінімальна впевненість моделі для угоди за правилами бота (бойовий поріг 0.70 модель v4 практично не досягає). «Перевага BUY над SELL» — тримати BTC, коли ймовірність зростання перевищує ймовірність падіння на задану величину. Всі варіанти ведуться з 08.10 з тією самою стартовою позицією, що й бойовий портфель.' },
+]
 const FLOW_LABEL = { initial: 'Стартовий капітал', deposit: 'Поповнення', withdrawal: 'Вилучення', testnet_reset: 'Скидання testnet', correction: 'Коригування балансу' }
 const grid = min => ({ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${min}px, 1fr))`, gap: 12 })
 const cardStyle = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }
@@ -461,51 +469,62 @@ export default function Dashboard() {
             {ms.rows.length === 0 ? (
               <div style={{ ...cardStyle, color: C.muted, fontSize: 13 }}>Дані спостережень з'являться після першої нічної синхронізації.</div>
             ) : (<>
-              <div style={cardStyle}>
-                <div style={titleStyle}>Дохідність віртуальних портфелів, %</div>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={ms.chart}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
-                    <YAxis tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => `${v.toFixed(1)}%`} domain={['auto', 'auto']} />
-                    <Tooltip content={<CustomTooltip unit="%" />} />
-                    <ReferenceLine y={0} stroke={C.dim} />
-                    {ms.names.map(n => (
-                      <Line key={n} isAnimationActive={false} type="linear" dataKey={n} name={ms.rows.find(r => r.model === n)?.title || n}
-                        stroke={MODEL_COLORS[n] || C.purple} strokeWidth={n === 'v4_live' ? 2.5 : 1.5}
-                        strokeDasharray={n === 'bh' ? '5 3' : undefined} dot={ms.chart.length < 30 ? { r: 2 } : false} />
-                    ))}
-                    <Legend wrapperStyle={legendStyle} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead><tr style={{ background: C.bg }}>
-                      {['Модель', 'Як працює', 'Дохідність', 'Макс. просадка', 'Частка BTC', 'Сигнал', 'Угод', 'Днів'].map(h => (
-                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>))}
-                    </tr></thead>
-                    <tbody>
-                      {ms.rows.map(r => (
-                        <tr key={r.model} style={{ borderTop: `1px solid ${C.border}` }}>
-                          <td style={{ padding: '12px 14px', fontSize: 13, color: C.text, whiteSpace: 'nowrap' }}>
-                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: MODEL_COLORS[r.model] || C.purple, marginRight: 8 }} />{r.title}
-                          </td>
-                          <td style={{ padding: '12px 14px', fontSize: 11, color: C.muted, maxWidth: 360 }}>{r.description}</td>
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: C.text, ...mono }}>{pct(r.ret, 2)}</td>
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{pct(r.maxDD, 2)}</td>
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: C.text, ...mono }}>{(r.position * 100).toFixed(0)}%</td>
-                          <td style={{ padding: '12px 14px' }}><SignalBadge signal={r.signal} /></td>
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{r.trades}</td>
-                          <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{r.days}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <Note>Короткий період спостережень не дозволяє робити висновків: різниця в кілька відсотків за тижні зазвичай статистично незначуща. Висновки плануються після 4–6 тижнів.</Note>
+              {MODEL_GROUPS.map(gr => {
+                const rows = ms.rows.filter(gr.pick)
+                if (!rows.length) return null
+                const names = rows.map(r => r.model)
+                return (
+                  <div key={gr.key} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ fontSize: 15, color: C.text, fontWeight: 600, marginTop: 8 }}>{gr.title}</div>
+                    {gr.intro && <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{gr.intro}</div>}
+                    <div style={cardStyle}>
+                      <div style={titleStyle}>Дохідність віртуальних портфелів, %</div>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={ms.chart}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={C.dim} strokeOpacity={0.5} />
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.muted }} />
+                          <YAxis tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => `${v.toFixed(1)}%`} domain={['auto', 'auto']} />
+                          <Tooltip content={<CustomTooltip unit="%" />} />
+                          <ReferenceLine y={0} stroke={C.dim} />
+                          {names.map(n => (
+                            <Line key={n} isAnimationActive={false} type="linear" dataKey={n} name={rows.find(r => r.model === n)?.title || n}
+                              stroke={MODEL_COLORS[n] || C.purple} strokeWidth={n === 'v4_live' ? 2.5 : 1.5}
+                              strokeDasharray={n === 'bh' ? '5 3' : undefined} dot={ms.chart.length < 30 ? { r: 2 } : false} />
+                          ))}
+                          <Legend wrapperStyle={legendStyle} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead><tr style={{ background: C.bg }}>
+                            {['Модель', 'Як працює', 'Дохідність', 'Макс. просадка', 'Частка BTC', 'Сигнал', 'Угод', 'Днів'].map(h => (
+                              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: C.muted, fontWeight: 600 }}>{h}</th>))}
+                          </tr></thead>
+                          <tbody>
+                            {rows.map(r => (
+                              <tr key={r.model} style={{ borderTop: `1px solid ${C.border}` }}>
+                                <td style={{ padding: '12px 14px', fontSize: 13, color: C.text, whiteSpace: 'nowrap' }}>
+                                  <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: MODEL_COLORS[r.model] || C.purple, marginRight: 8 }} />{r.title}
+                                </td>
+                                <td style={{ padding: '12px 14px', fontSize: 11, color: C.muted, maxWidth: 360 }}>{r.description}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: C.text, ...mono }}>{pct(r.ret, 2)}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{pct(r.maxDD, 2)}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: C.text, ...mono }}>{(r.position * 100).toFixed(0)}%</td>
+                                <td style={{ padding: '12px 14px' }}><SignalBadge signal={r.signal} /></td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{r.trades}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: C.muted, ...mono }}>{r.days}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              <Note>Короткий період спостережень не дозволяє робити висновків: різниця в кілька відсотків за тижні зазвичай статистично незначуща. Критерій вибору порогу визначено заздалегідь: коефіцієнт Шарпа і максимальна просадка порівняно з бойовою моделлю та «купити й тримати» за щонайменше 90 днів спостережень, з урахуванням того, що порівнюється кілька варіантів одночасно.</Note>
             </>)}
           </div>
         )}
