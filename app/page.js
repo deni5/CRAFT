@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [obs, setObs] = useState([])
   const [models, setModels] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchedAt, setFetchedAt] = useState(null)
 
   const fetchData = useCallback(async () => {
     // Supabase віддає щонайбільше 1000 рядків за запит — читаємо всі сторінки
@@ -106,13 +107,22 @@ export default function Dashboard() {
     if (f.data) setFlows(f.data)
     if (o.data) setObs(o.data)
     if (m.data) setModels(m.data)
+    setFetchedAt(new Date())
     setLoading(false)
   }, [])
 
   useEffect(() => {
     fetchData()
     const interval = setInterval(fetchData, 300000)
-    return () => clearInterval(interval)
+    // Браузер призупиняє таймери у фонових вкладках і під час сну Mac — оновлюємо при поверненні на сторінку
+    const onShow = () => { if (document.visibilityState === 'visible') fetchData() }
+    document.addEventListener('visibilitychange', onShow)
+    window.addEventListener('focus', onShow)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onShow)
+      window.removeEventListener('focus', onShow)
+    }
   }, [fetchData])
 
   const latest = signals[signals.length - 1] || {}
@@ -190,6 +200,7 @@ export default function Dashboard() {
             {lastRun && (
               <span style={{ fontSize: 11, color: C.muted }}>
                 останній запуск {lastRun.toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {fetchedAt && <> · сторінку оновлено о {fetchedAt.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}</>}
               </span>
             )}
           </div>
@@ -352,7 +363,7 @@ export default function Dashboard() {
                   <YAxis domain={[-0.5, 0.5]} tick={{ fontSize: 10, fill: C.muted }} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke={C.muted} strokeDasharray="2 2" />
-                  <ReferenceLine y={-0.15} stroke={C.red} strokeDasharray="3 3" label={{ value: 'ведмежий поріг −0.15', fill: C.red, fontSize: 9, position: 'insideBottomRight' }} />
+                  <ReferenceLine y={-0.15} stroke={C.red} strokeDasharray="3 3" label={{ value: 'ведмежий поріг −0.15', fill: C.red, fontSize: 9, position: 'insideBottomLeft' }} />
                   <Line isAnimationActive={false} type="linear" dataKey="mean" name="Середній сентимент дня" stroke={C.blue} strokeWidth={2} dot={false} connectNulls={false} />
                   <Line isAnimationActive={false} type="linear" dataKey="momentum" name="Імпульс (зміна за тиждень)" stroke={C.purple} strokeWidth={1.5} dot={false} strokeDasharray="4 2" connectNulls={false} />
                   <Legend wrapperStyle={legendStyle} />
