@@ -85,7 +85,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    const q = t => supabase.from(t).select('*').order('date', { ascending: true })
+    // Supabase віддає щонайбільше 1000 рядків за запит — читаємо всі сторінки
+    const q = async t => {
+      const all = []
+      for (let from = 0; ; from += 1000) {
+        const r = await supabase.from(t).select('*').order('date', { ascending: true }).range(from, from + 999)
+        if (r.error) return all.length ? { data: all } : r
+        all.push(...(r.data || []))
+        if (!r.data || r.data.length < 1000) return { data: all }
+      }
+    }
     const [s, t, p, sent, f, o, m] = await Promise.all([
       q('signals'), q('trades'), q('portfolio_history'), q('sentiment_history'),
       q('capital_flows'), q('model_observations'), supabase.from('models').select('*'),
