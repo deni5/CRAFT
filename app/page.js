@@ -61,6 +61,59 @@ function SignalBadge({ signal, size = 'md' }) {
   )
 }
 
+// Кіт дня: піксельний індикатор настрою ринку BTC (craft_cat.py, оновлюється після кожного нічного звіту)
+function CatCard({ cat, hist }) {
+  const m = Number(cat.mood || 0)
+  const col = m > 0.1 ? C.green : m < -0.1 ? C.red : C.muted
+  const comps = cat.components || {}
+  const names = { trend: 'Тренд', momentum: 'Імпульс 7 днів', fear_greed: 'Fear & Greed', sentiment: 'Новини', model: 'Модель v4' }
+  const lines = (cat.caption || '').split('\n')
+  const bot = lines.find(l => l.startsWith('Бот')) || ''
+  const h = (hist || []).map(r => ({ date: r.date?.slice(5), mood: Number(r.mood) }))
+  return (
+    <div style={{ ...cardStyle, display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+      <img src={`data:image/png;base64,${cat.png_b64}`} alt={`Настрій ринку: ${cat.label}`}
+        style={{ width: 240, maxWidth: '100%', imageRendering: 'pixelated', borderRadius: 8, border: `1px solid ${C.border}` }} />
+      <div style={{ flex: '1 1 300px', minWidth: 0 }}>
+        <div style={titleStyle}>Настрій ринку BTC · {fmtDate(cat.date)}</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: col, ...mono }}>{m >= 0 ? '+' : ''}{m.toFixed(2)} <span style={{ fontSize: 15, fontWeight: 500 }}>{cat.label}</span></div>
+        <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>
+          тривога {Number(cat.fear || 0).toFixed(2)} · тренд {pct((cat.gap50 || 0) * 100)} до SMA50 · 7 днів {pct((cat.ret7 || 0) * 100)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginTop: 14 }}>
+          {Object.entries(names).map(([k, n]) => {
+            const v = Number(comps[k] || 0)
+            return (
+              <div key={k} style={{ fontSize: 11, color: C.muted }}>
+                {n}
+                <div style={{ height: 6, background: C.dim, borderRadius: 3, marginTop: 4, position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: v >= 0 ? '50%' : `${50 + v * 50}%`, width: `${Math.abs(v) * 50}%`, height: 6, borderRadius: 3, background: v >= 0 ? C.green : C.red }} />
+                </div>
+                <span style={{ ...mono, color: C.text }}>{v >= 0 ? '+' : ''}{v.toFixed(2)}</span>
+              </div>
+            )
+          })}
+        </div>
+        {bot && <div style={{ fontSize: 12, color: C.text, marginTop: 12 }}>{bot}</div>}
+        {h.length > 1 && (
+          <div style={{ marginTop: 10 }}>
+            <ResponsiveContainer width="100%" height={60}>
+              <LineChart data={h}>
+                <YAxis hide domain={[-1, 1]} />
+                <XAxis dataKey="date" hide />
+                <ReferenceLine y={0} stroke={C.dim} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line isAnimationActive={false} type="monotone" dataKey="mood" name="Настрій" stroke={col} strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+        <div style={{ fontSize: 11, color: C.muted, marginTop: 8 }}>Настрій = зважена сума: тренд 35%, імпульс 25%, Fear & Greed 15%, модель 15%, новини 10%. Шкала від −1 (паніка) до +1 (ейфорія).</div>
+      </div>
+    </div>
+  )
+}
+
 const CustomTooltip = ({ active, payload, label, unit }) => {
   if (!active || !payload?.length) return null
   return (
@@ -88,6 +141,8 @@ export default function Dashboard() {
   const [flows, setFlows] = useState([])
   const [obs, setObs] = useState([])
   const [models, setModels] = useState([])
+  const [cat, setCat] = useState(null)          // кіт дня: останній запис craft_cat (з PNG)
+  const [catHist, setCatHist] = useState([])    // історія настрою без зображень
   const [loading, setLoading] = useState(true)
   const [fetchedAt, setFetchedAt] = useState(null)
 
@@ -102,10 +157,14 @@ export default function Dashboard() {
         if (!r.data || r.data.length < 1000) return { data: all }
       }
     }
-    const [s, t, p, sent, f, o, m] = await Promise.all([
-      q('signals'), q('trades'), q('portfolio_history'), q('sentiment_history'),
+    const [s, t, p, sent, f, o, m, cl, ch] = await Promise.all([
+      q('signals'), q('craft_trades'), q('portfolio_history'), q('sentiment_history'),
       q('capital_flows'), q('model_observations'), supabase.from('models').select('*'),
+      supabase.from('craft_cat').select('*').order('date', { ascending: false }).limit(1),
+      supabase.from('craft_cat').select('date,mood,fear,label').order('date', { ascending: true }).limit(1000),
     ])
+    if (cl.data && cl.data.length) setCat(cl.data[0])
+    if (ch.data) setCatHist(ch.data)
     if (s.data) setSignals(dedupeByDate(s.data))
     if (t.data) setTrades(t.data)
     if (p.data) setPortfolio(p.data)
@@ -227,6 +286,7 @@ export default function Dashboard() {
         {/* ОГЛЯД */}
         {tab === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {cat && <CatCard cat={cat} hist={catHist} />}
             <div style={grid(230)}>
               <KPICard label="Поточний портфель" value={usd(currentPortfolio, 2)}
                 sub={`BTC: ${latest.btc?.toFixed(4)} · USDT: ${latest.usdt?.toFixed(0)}`} color={C.green} />
